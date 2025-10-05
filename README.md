@@ -13,8 +13,6 @@
 
 ## 📸 Screenshots
 
-To make the layout clean and responsive, we use Markdown tables for side-by-side images.
-
 | Search Interface | Search Results |
 | :---: | :---: |
 | <img src="https://github.com/user-attachments/assets/49ba7249-b634-4ea2-8945-390971d975e8" width="100%"> | <img src="https://github.com/user-attachments/assets/23e3f876-14ba-44e7-8c59-3e070f03c1ff" width="100%"> |
