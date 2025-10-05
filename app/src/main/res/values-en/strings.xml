@@ -1,0 +1,23 @@
+<!-- In file: app/src/main/res/values-en/strings.xml -->
+<resources>
+    <string name="app_name">trace.moe</string>
+
+    <!-- Search Component -->
+    <string name="search_placeholder">Enter URL or select an image...</string>
+    <string name="search_results_title">Search Results</string>
+
+    <!-- Idle Screen -->
+    <string name="idle_prompt">Please tap the icon on the top right to select an image to start searching.</string>
+
+    <!-- Result Item -->
+    <string name="episode_label">Episode: %1$d</string>
+    <string name="similarity_label">Similarity: ~%1$.2f%%</string>
+
+    <!-- Toast & Errors -->
+    <string name="toast_title_copied">Anime title copied</string>
+    <string name="error_no_results">No matching results found.</string>
+    <string name="error_cant_read_file">Cannot read image file.</string>
+    <string name="error_unknown">An unknown error occurred</string>
+    <string name="error_title_fetch_failed">ID: %1$d (Failed to fetch)</string>
+    <string name="error_title_parsing_failed">Cannot parse title</string>
+</resources>

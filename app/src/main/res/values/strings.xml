@@ -1,0 +1,23 @@
+<!-- In file: app/src/main/res/values/strings.xml -->
+<resources>
+    <string name="app_name">trace.moe</string>
+
+    <!-- Search Component -->
+    <string name="search_placeholder">輸入圖片 URL 或選取本地圖片...</string>
+    <string name="search_results_title">搜尋結果</string>
+
+    <!-- Idle Screen -->
+    <string name="idle_prompt">請點擊右上角圖示，選擇一張圖片以開始搜尋。</string>
+
+    <!-- Result Item -->
+    <string name="episode_label">集數: %1$d</string>
+    <string name="similarity_label">相似度: ~%1$.2f%%</string>
+
+    <!-- Toast & Errors -->
+    <string name="toast_title_copied">已複製作品名稱</string>
+    <string name="error_no_results">找不到相符的結果。</string>
+    <string name="error_cant_read_file">無法讀取圖片檔案。</string>
+    <string name="error_unknown">發生未知錯誤</string>
+    <string name="error_title_fetch_failed">ID: %1$d (查詢失敗)</string>
+    <string name="error_title_parsing_failed">無法解析標題</string>
+</resources>
