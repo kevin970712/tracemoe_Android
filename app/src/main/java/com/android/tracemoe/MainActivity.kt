@@ -1,4 +1,4 @@
-// In file: MainActivity.kt
+// In file: app/src/main/java/com/android/tracemoe/MainActivity.kt
 package com.android.tracemoe
 
 import android.content.Context
@@ -20,7 +20,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.Image
 import androidx.compose.material3.*
@@ -41,7 +40,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.android.tracemoe.ui.theme.TracemoeTheme
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.launch
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -100,15 +103,10 @@ fun TraceMoeApp() {
                 val response = when (trigger) {
                     is SearchTrigger.FromFile -> {
                         val imagePart = uriToMultipartBodyPart(context, trigger.uri, "image")
-                        if (imagePart != null) {
-                            ApiClient.traceMoeService.searchByImage(imagePart)
-                        } else {
-                            throw Exception(cantReadFileError)
-                        }
+                            ?: throw Exception(cantReadFileError)
+                        ApiClient.traceMoeService.searchByImage(imagePart)
                     }
-                    is SearchTrigger.FromUrl -> {
-                        ApiClient.traceMoeService.searchByUrl(trigger.url)
-                    }
+                    is SearchTrigger.FromUrl -> ApiClient.traceMoeService.searchByUrl(trigger.url)
                 }
 
                 if (response.result.isEmpty()) {
@@ -120,7 +118,7 @@ fun TraceMoeApp() {
                 uiState = SearchUiState.Success(response.result, titlesMap)
 
             } catch (e: Exception) {
-                Log.e("TraceMoeApp", "API 呼叫失败", e)
+                Log.e("TraceMoeApp", "API Call Failed", e)
                 uiState = SearchUiState.Error(e.message ?: unknownError)
             }
         }
@@ -175,21 +173,10 @@ fun TraceMoeApp() {
                     contentAlignment = Alignment.TopCenter
                 ) {
                     when (val state = uiState) {
-                        is SearchUiState.Loading -> {
-                            CircularProgressIndicator(modifier = Modifier.padding(top = 16.dp))
-                        }
-                        is SearchUiState.Success -> {
-                            SearchResultList(results = state.results, titles = state.titles)
-                        }
-                        is SearchUiState.Error -> {
-                            Text(
-                                "錯誤: ${state.message}",
-                                color = MaterialTheme.colorScheme.error,
-                                modifier = Modifier.padding(top = 16.dp)
-                            )
-                        }
-                        is SearchUiState.Idle -> { /* This state is handled above */
-                        }
+                        is SearchUiState.Loading -> CircularProgressIndicator(modifier = Modifier.padding(top = 16.dp))
+                        is SearchUiState.Success -> SearchResultList(results = state.results, titles = state.titles)
+                        is SearchUiState.Error -> Text("錯誤: ${state.message}", color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(top = 16.dp))
+                        is SearchUiState.Idle -> Unit
                     }
                 }
             }
@@ -201,22 +188,19 @@ suspend fun CoroutineScope.fetchTitlesForResults(results: List<SearchResult>): M
     val idsToFetch = results.mapNotNull { (it.anilist as? Double)?.toLong() ?: (it.anilist as? Long) }.distinct()
     if (idsToFetch.isEmpty()) return emptyMap()
 
-    val deferredTitles = idsToFetch.map { id ->
+    return idsToFetch.map { id ->
         async(Dispatchers.IO) {
             try {
-                val query =
-                    """query(${'$'}id: Int) { Media(id: ${'$'}id, type: ANIME) { title { romaji native } } }""".trimIndent()
-                val variables = mapOf("id" to id)
-                val response = ApiClient.anilistService.getAnimeTitle(GraphQlQuery(query, variables))
+                val query = """query(${'$'}id: Int) { Media(id: ${'$'}id, type: ANIME) { title { romaji native } } }""".trimIndent()
+                val response = ApiClient.anilistService.getAnimeTitle(GraphQlQuery(query, mapOf("id" to id)))
                 val title = response.data.Media.title
                 id to (title.native ?: title.romaji ?: "Unknown")
             } catch (e: Exception) {
                 Log.e("AnilistFetch", "Failed to fetch title for ID $id", e)
-                id to "ID: $id (查询失败)" // This part is tricky to translate, so we leave it
+                id to "ID: $id (查詢失敗)"
             }
         }
-    }
-    return deferredTitles.awaitAll().toMap()
+    }.awaitAll().toMap()
 }
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
@@ -269,9 +253,7 @@ fun SearchResultItem(result: SearchResult, titles: Map<Long, String>) {
 
     Card(
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        )
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
             Text(
@@ -282,21 +264,19 @@ fun SearchResultItem(result: SearchResult, titles: Map<Long, String>) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .combinedClickable(onClick = {}, onLongClick = {
-                        clipboardManager.setText(AnnotatedString(titleText))
-                        Toast
-                            .makeText(context, copiedToastText, Toast.LENGTH_SHORT)
-                            .show()
-                    })
+                    .combinedClickable(
+                        onClick = {},
+                        onLongClick = {
+                            clipboardManager.setText(AnnotatedString(titleText))
+                            Toast.makeText(context, copiedToastText, Toast.LENGTH_SHORT).show()
+                        }
+                    )
                     .padding(horizontal = 16.dp, vertical = 8.dp)
             )
             Divider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f))
             Row(modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min)) {
                 Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(horizontal = 16.dp, vertical = 8.dp)
-                        .fillMaxHeight(),
+                    modifier = Modifier.weight(1f).padding(horizontal = 16.dp, vertical = 8.dp).fillMaxHeight(),
                     verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterVertically)
                 ) {
                     result.episode?.let {
@@ -320,10 +300,7 @@ fun SearchResultItem(result: SearchResult, titles: Map<Long, String>) {
                 AsyncImage(
                     model = result.image,
                     contentDescription = "Anime Scene",
-                    modifier = Modifier
-                        .fillMaxHeight()
-                        .aspectRatio(16 / 9f)
-                        .clip(RoundedCornerShape(bottomEnd = 12.dp)),
+                    modifier = Modifier.fillMaxHeight().aspectRatio(16f / 9f).clip(RoundedCornerShape(bottomEnd = 12.dp)),
                     contentScale = ContentScale.Crop
                 )
             }
@@ -339,17 +316,11 @@ private fun formatTime(seconds: Double): String {
 }
 
 fun uriToMultipartBodyPart(context: Context, uri: Uri, partName: String): MultipartBody.Part? {
-    // ... (此函式保持不變)
     return try {
-        val inputStream: InputStream? = context.contentResolver.openInputStream(uri)
-        val fileBytes = inputStream?.readBytes()
-        inputStream?.close()
-        if (fileBytes != null) {
-            val requestBody =
-                fileBytes.toRequestBody(context.contentResolver.getType(uri)?.toMediaTypeOrNull())
+        context.contentResolver.openInputStream(uri)?.use { inputStream ->
+            val fileBytes = inputStream.readBytes()
+            val requestBody = fileBytes.toRequestBody(context.contentResolver.getType(uri)?.toMediaTypeOrNull())
             MultipartBody.Part.createFormData(partName, "image.jpg", requestBody)
-        } else {
-            null
         }
     } catch (e: Exception) {
         Log.e("Conversion", "Failed to convert URI to MultipartBody.Part", e)

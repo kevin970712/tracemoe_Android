@@ -32,7 +32,6 @@ android {
     kotlinOptions {
         jvmTarget = "1.8"
     }
-    // 【關鍵設定】這兩項是啟用 Compose 的正確方式
     buildFeatures {
         compose = true
     }
@@ -42,7 +41,6 @@ android {
 }
 
 dependencies {
-    // 這裡的內容保持不變，它們是正確的
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -53,12 +51,9 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.androidx.material.icons.extended)
     implementation("io.coil-kt:coil-compose:2.6.0")
-    // 【新增】網路請求 Retrofit
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
-    // 【新增】JSON 解析 Moshi
     implementation("com.squareup.retrofit2:converter-moshi:2.9.0")
     implementation("com.squareup.moshi:moshi-kotlin:1.15.0")
-    // Coil for image loading (already added)
     implementation("io.coil-kt:coil-compose:2.6.0")
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
