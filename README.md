@@ -1,3 +1,5 @@
+> 中文 README 在 [這裡](./README_zh-Hant.md)
+
 <h1 align="center">trace.moe Unofficial Android Client</h1>
 <p align="center">
   A simple, fast application for anime enthusiasts to search for the source anime, episode, and timestamp of any given screenshot or frame.
